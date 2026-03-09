@@ -1,0 +1,26 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Order {
+  orderId      String   @id
+  value        Float
+  creationDate DateTime
+  items        Item[]
+}
+
+model Item {
+  orderId   String
+  productId Int
+  quantity  Int
+  price     Float
+
+  order Order @relation(fields: [orderId], references: [orderId], onDelete: Cascade)
+
+  @@id([orderId, productId])
+}
