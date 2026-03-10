@@ -67,9 +67,10 @@ git clone https://github.com/VictorHugoGutierrez/Pedidos-API.git
 cd Pedidos-API
 npm install
 ```
-Cria um ficheiro chamado .env na raiz do projeto e adiciona a tua chave secreta para o JWT:
+Cria um ficheiro chamado .env na raiz do projeto, adiciona a tua chave secreta para o JWT e a url do banco de dados:
 ```
 SECRET_KEY="tua_chave_super_secreta_aqui"
+DATABASE_URL="file:./dev.db"
 ````
 
 ### 3. Configurar a Base de Dados
