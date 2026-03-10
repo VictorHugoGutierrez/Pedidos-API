@@ -1,17 +1,23 @@
 import { prisma } from "./lib/prisma.js";
 import { mapOrderData } from "./utils/mappingData.js";
 
-export async function createOrder(app) {
-  const postOptions = {
+export async function updateOrder(app) {
+  const putSchema = {
     schema: {
-      description: "Cria um novo pedido",
+      description: "Atualiza um pedido existente",
       tags: ["Orders"],
+      params: {
+        type: "object",
+        properties: {
+          orderId: { type: "string", description: "Número do pedido na URL" },
+        },
+      },
       body: {
         type: "object",
         required: ["numeroPedido", "valorTotal", "dataCriacao", "items"],
         properties: {
           numeroPedido: { type: "string", examples: ["v10089015vdb-01"] },
-          valorTotal: { type: "number", examples: [10000] },
+          valorTotal: { type: "number", examples: [15000] },
           dataCriacao: {
             type: "string",
             format: "date-time",
@@ -24,16 +30,16 @@ export async function createOrder(app) {
               required: ["idItem", "quantidadeItem", "valorItem"],
               properties: {
                 idItem: { type: "string", examples: ["2434"] },
-                quantidadeItem: { type: "integer", examples: [1] },
-                valorItem: { type: "number", examples: [1000] },
+                quantidadeItem: { type: "integer", examples: [2] },
+                valorItem: { type: "number", examples: [7500] },
               },
             },
           },
         },
       },
       response: {
-        201: {
-          description: "Pedido criado com sucesso",
+        200: {
+          description: "Pedido atualizado com sucesso",
           type: "object",
           properties: {
             orderId: { type: "string" },
@@ -52,38 +58,43 @@ export async function createOrder(app) {
             },
           },
         },
+        404: {
+          description: "Pedido não encontrado",
+          type: "object",
+          properties: { error: { type: "string" } },
+        },
       },
     },
     onRequest: [app.authenticate],
   };
 
-  app.post("/order", postOptions, async (request, reply) => {
+  app.put("/order/:orderId", putSchema, async (request, reply) => {
     try {
+      const { orderId } = request.params;
       const mappedBody = mapOrderData(request.body);
 
-      const order = await prisma.order.create({
+      const updatedOrder = await prisma.order.update({
+        where: { orderId: orderId },
         data: {
-          orderId: mappedBody.orderId,
           value: mappedBody.value,
           creationDate: mappedBody.creationDate,
           items: {
+            deleteMany: {},
             create: mappedBody.items,
           },
         },
         include: { items: true },
       });
 
-      return reply.status(201).send(order);
+      return reply.status(200).send(updatedOrder);
     } catch (error) {
-      if (error.code === "P2002") {
+      if (error.code === "P2025") {
         return reply
-          .status(409)
-          .send({
-            error: "Um pedido com este número já existe no banco de dados.",
-          });
+          .status(404)
+          .send({ error: "Pedido não encontrado para atualização." });
       }
 
-      return reply.status(500).send({ error: "Erro ao criar o pedido." });
+      return reply.status(500).send({ error: "Erro ao atualizar o pedido." });
     }
   });
 }

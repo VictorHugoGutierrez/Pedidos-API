@@ -1,6 +1,6 @@
 export function mapOrderData(inputData) {
   return {
-    orderId: inputData.numeroPedido,
+    orderId: inputData.numeroPedido.split("-")[0],
     value: inputData.valorTotal,
     creationDate: new Date(inputData.dataCriacao),
     items: inputData.items.map((item) => ({

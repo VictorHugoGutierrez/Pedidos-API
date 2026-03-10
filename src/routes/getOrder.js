@@ -1,7 +1,48 @@
 import { prisma } from "./lib/prisma.js";
 
 export async function getOrder(app) {
-  app.get("/order/:orderId", async (request, reply) => {
+  const getSchema = {
+    schema: {
+      description: "Obter os dados do pedido pelo número",
+      tags: ["Orders"],
+      params: {
+        type: "object",
+        properties: {
+          orderId: { type: "string", description: "Número do pedido na URL" },
+        },
+      },
+      response: {
+        200: {
+          description: "Pedido encontrado com sucesso",
+          type: "object",
+          properties: {
+            orderId: { type: "string" },
+            value: { type: "number" },
+            creationDate: { type: "string", format: "date-time" },
+            items: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  productId: { type: "integer" },
+                  quantity: { type: "integer" },
+                  price: { type: "number" },
+                },
+              },
+            },
+          },
+        },
+        404: {
+          description: "Pedido não encontrado",
+          type: "object",
+          properties: { error: { type: "string" } },
+        },
+      },
+    },
+    onRequest: [app.authenticate],
+  };
+
+  app.get("/order/:orderId", getSchema, async (request, reply) => {
     try {
       const { orderId } = request.params;
 
